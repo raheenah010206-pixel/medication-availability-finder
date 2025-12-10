@@ -3,6 +3,8 @@ import { Layout } from './components/Layout';
 import { MedicationSearch } from './components/MedicationSearch';
 import { PharmacyCard } from './components/PharmacyCard';
 import { AddPharmacyModal } from './components/AddPharmacyModal';
+import { RecentUpdatesModal } from './components/RecentUpdatesModal';
+import { PopularMedsModal } from './components/PopularMedsModal';
 import { WelcomeGuide } from './components/WelcomeGuide';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { EmptyState } from './components/EmptyState';
@@ -18,6 +20,8 @@ function App() {
   const [availabilities, setAvailabilities] = useState<Availability[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAddPharmacy, setShowAddPharmacy] = useState(false);
+  const [showRecentUpdates, setShowRecentUpdates] = useState(false);
+  const [showPopularMeds, setShowPopularMeds] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { showToast } = useToast();
@@ -53,6 +57,11 @@ function App() {
         console.error('Error searching medication:', error);
         showToast('Failed to search medication', 'error');
       } else if (data) {
+        await supabase
+          .from('medications')
+          .update({ search_count: (data.search_count || 0) + 1 })
+          .eq('id', data.id);
+
         setSelectedMedication(data);
         showToast(`Found ${data.name}`, 'success');
       } else {
@@ -110,6 +119,31 @@ function App() {
     setSearchQuery('');
   };
 
+  const handleModalMedicationSelect = async (medicationId: string, medicationName: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('medications')
+        .select('*')
+        .eq('id', medicationId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching medication:', error);
+        showToast('Failed to load medication', 'error');
+      } else if (data) {
+        await supabase
+          .from('medications')
+          .update({ search_count: (data.search_count || 0) + 1 })
+          .eq('id', data.id);
+
+        setSelectedMedication(data);
+      }
+    } catch (err) {
+      console.error('Unexpected error:', err);
+      showToast('An error occurred', 'error');
+    }
+  };
+
   const handlePharmacyAdded = () => {
     showToast('Pharmacy added successfully', 'success');
     if (selectedMedication) {
@@ -137,8 +171,8 @@ function App() {
           <QuickActions
             onAddPharmacy={() => setShowAddPharmacy(true)}
             onShowNearby={() => showToast('Nearby search coming soon', 'info')}
-            onShowRecent={() => showToast('Recent updates coming soon', 'info')}
-            onShowPopular={() => showToast('Popular medications coming soon', 'info')}
+            onShowRecent={() => setShowRecentUpdates(true)}
+            onShowPopular={() => setShowPopularMeds(true)}
           />
 
           <MedicationSearch
@@ -200,6 +234,18 @@ function App() {
         isOpen={showAddPharmacy}
         onClose={() => setShowAddPharmacy(false)}
         onAdd={handlePharmacyAdded}
+      />
+
+      <RecentUpdatesModal
+        isOpen={showRecentUpdates}
+        onClose={() => setShowRecentUpdates(false)}
+        onSelectMedication={handleModalMedicationSelect}
+      />
+
+      <PopularMedsModal
+        isOpen={showPopularMeds}
+        onClose={() => setShowPopularMeds(false)}
+        onSelectMedication={handleModalMedicationSelect}
       />
     </div>
   );
