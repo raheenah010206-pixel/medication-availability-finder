@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth';
 import { formatPrice, formatTimeAgo } from '../utils/formatters';
 import { UpdateAvailabilityModal } from './UpdateAvailabilityModal';
 import { HelpTooltip } from './HelpTooltip';
+import { PharmacyVerification } from './PharmacyVerification';
 
 interface PharmacyCardProps {
   pharmacy: Pharmacy;
@@ -102,7 +103,7 @@ export function PharmacyCard({ pharmacy, availability, medicationId, onUpdate }:
         </div>
 
         {availability && (
-          <div className="border-t pt-4 space-y-2">
+          <div className="border-t pt-4 space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2 text-sm">
                 <DollarSign className="h-4 w-4 text-gray-400" />
@@ -111,11 +112,12 @@ export function PharmacyCard({ pharmacy, availability, medicationId, onUpdate }:
                   <HelpTooltip content="Price may vary. Contact pharmacy to confirm current pricing." />
                 )}
               </div>
-              
-              <div className="text-xs text-gray-500">
-                Updated {formatTimeAgo(availability.last_updated)}
-              </div>
             </div>
+
+            <PharmacyVerification
+              lastUpdated={availability.last_updated}
+              updateCount={1}
+            />
           </div>
         )}
 

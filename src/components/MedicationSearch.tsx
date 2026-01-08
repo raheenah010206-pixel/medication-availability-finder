@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Pill, TrendingUp, Clock } from 'lucide-react';
+import { Search, Plus, Pill, TrendingUp, Clock, X } from 'lucide-react';
 import { LoadingSpinner } from './LoadingSpinner';
 import { EmptyState } from './EmptyState';
 import { supabase } from '../lib/supabase';
 import { Medication } from '../types';
+import { medicationCategories, getCategoryForMedication } from '../utils/medicationCategories';
 
 interface MedicationSearchProps {
   onMedicationSelect: (medication: Medication) => void;
@@ -15,22 +16,31 @@ export function MedicationSearch({ onMedicationSelect, selectedMedication }: Med
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredMedications, setFilteredMedications] = useState<Medication[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
     fetchMedications();
   }, []);
 
   useEffect(() => {
+    let filtered = medications;
+
     if (searchTerm.trim()) {
-      const filtered = medications.filter(med =>
+      filtered = medications.filter(med =>
         med.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (med.generic_name && med.generic_name.toLowerCase().includes(searchTerm.toLowerCase()))
       );
-      setFilteredMedications(filtered);
-    } else {
-      setFilteredMedications(medications);
     }
-  }, [searchTerm, medications]);
+
+    if (selectedCategory) {
+      const categoryMeds = medicationCategories[selectedCategory] || [];
+      filtered = filtered.filter(med =>
+        categoryMeds.some(catMed => catMed.toLowerCase() === med.name.toLowerCase())
+      );
+    }
+
+    setFilteredMedications(filtered);
+  }, [searchTerm, medications, selectedCategory]);
 
   const fetchMedications = async () => {
     setLoading(true);
@@ -61,7 +71,7 @@ export function MedicationSearch({ onMedicationSelect, selectedMedication }: Med
       </div>
 
       {/* Search Input */}
-      <div className="relative mb-6">
+      <div className="relative mb-4">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
           type="text"
@@ -69,7 +79,37 @@ export function MedicationSearch({ onMedicationSelect, selectedMedication }: Med
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          aria-label="Search medications"
         />
+      </div>
+
+      {/* Category Filter */}
+      <div className="mb-6">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedCategory(null)}
+            className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+              selectedCategory === null
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
+          >
+            All Medications
+          </button>
+          {Object.keys(medicationCategories).map((category) => (
+            <button
+              key={category}
+              onClick={() => setSelectedCategory(category)}
+              className={`px-3 py-2 rounded-full text-sm font-medium transition-colors ${
+                selectedCategory === category
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
       </div>
 
       {loading ? (
@@ -135,14 +175,18 @@ export function MedicationSearch({ onMedicationSelect, selectedMedication }: Med
                   </h3>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredMedications.map((medication) => (
-                    <MedicationCard
-                      key={medication.id}
-                      medication={medication}
-                      onSelect={onMedicationSelect}
-                      isSelected={selectedMedication?.id === medication.id}
-                    />
-                  ))}
+                  {filteredMedications.map((medication) => {
+                    const category = getCategoryForMedication(medication.name);
+                    return (
+                      <MedicationCard
+                        key={medication.id}
+                        medication={medication}
+                        onSelect={onMedicationSelect}
+                        isSelected={selectedMedication?.id === medication.id}
+                        category={category}
+                      />
+                    );
+                  })}
                 </div>
               </div>
             </>
@@ -159,9 +203,10 @@ interface MedicationCardProps {
   isSelected: boolean;
   badge?: string;
   badgeColor?: 'orange' | 'purple' | 'blue';
+  category?: string | null;
 }
 
-function MedicationCard({ medication, onSelect, isSelected, badge, badgeColor }: MedicationCardProps) {
+function MedicationCard({ medication, onSelect, isSelected, badge, badgeColor, category }: MedicationCardProps) {
   const getBadgeClasses = () => {
     switch (badgeColor) {
       case 'orange':
@@ -198,6 +243,11 @@ function MedicationCard({ medication, onSelect, isSelected, badge, badgeColor }:
       {medication.generic_name && (
         <p className="text-xs text-gray-600 mt-1">
           Generic: {medication.generic_name}
+        </p>
+      )}
+      {category && (
+        <p className="text-xs text-blue-600 mt-2 font-medium">
+          {category}
         </p>
       )}
     </button>

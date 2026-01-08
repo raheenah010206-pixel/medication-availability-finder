@@ -1,101 +1,102 @@
 import React, { useState } from 'react';
-import { X, Search, MapPin, Users, CheckCircle } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
 export function WelcomeGuide() {
   const [hasSeenGuide, setHasSeenGuide] = useLocalStorage('naijameds-welcome-guide', false);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [showGuide, setShowGuide] = useState(false);
+
+  if (hasSeenGuide && !showGuide) return null;
+
+  const handleDismiss = () => {
+    setHasSeenGuide(true);
+    setShowGuide(false);
+  };
 
   const steps = [
     {
-      icon: <Search className="h-8 w-8 text-blue-600" />,
       title: 'Search for Medications',
-      description: 'Find any medication available in Nigerian pharmacies. Search by brand name or generic name.'
+      description: 'Find any medication available in Nigerian pharmacies. Search by brand name or generic name.',
+      tip: 'Start typing to see suggestions'
     },
     {
-      icon: <MapPin className="h-8 w-8 text-green-600" />,
       title: 'Find Nearby Pharmacies',
-      description: 'See which pharmacies have your medication in stock, with current prices and availability status.'
+      description: 'See which pharmacies have your medication in stock, with current prices and availability status.',
+      tip: 'Green badge = in stock, Red badge = out of stock'
     },
     {
-      icon: <Users className="h-8 w-8 text-purple-600" />,
       title: 'Help the Community',
-      description: 'Update stock status and prices to help other Nigerians find their medications faster.'
-    },
-    {
-      icon: <CheckCircle className="h-8 w-8 text-orange-600" />,
-      title: 'Get Started',
-      description: 'Ready to find your medications? Start by searching above or browse popular medications.'
+      description: 'Update stock status and prices to help other Nigerians find their medications faster.',
+      tip: 'Sign in to contribute and earn achievements'
     }
   ];
 
-  if (hasSeenGuide) return null;
-
-  const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      setHasSeenGuide(true);
-    }
-  };
-
-  const handleSkip = () => {
-    setHasSeenGuide(true);
-  };
-
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-bold text-gray-900">Welcome to NaijaMeds!</h2>
+    <>
+      {!hasSeenGuide && (
+        <div className="fixed bottom-4 right-4 bg-white rounded-lg shadow-lg border border-blue-200 p-4 max-w-xs z-40">
+          <div className="flex items-start justify-between mb-3">
+            <h3 className="font-semibold text-gray-900">Welcome to NaijaMeds!</h3>
+            <button
+              onClick={handleDismiss}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Dismiss welcome message"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <p className="text-sm text-gray-600 mb-3">
+            Find medications across Nigerian pharmacies. Compare prices and help others in your community.
+          </p>
           <button
-            onClick={handleSkip}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            onClick={() => setShowGuide(true)}
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium"
           >
-            <X className="h-6 w-6" />
+            Learn more
           </button>
         </div>
+      )}
 
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-4">
-            {steps[currentStep].icon}
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            {steps[currentStep].title}
-          </h3>
-          <p className="text-gray-600">
-            {steps[currentStep].description}
-          </p>
-        </div>
+      {showGuide && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-gray-900">How NaijaMeds Works</h2>
+              <button
+                onClick={handleDismiss}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+                aria-label="Close guide"
+              >
+                <X className="h-6 w-6" />
+              </button>
+            </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex space-x-2">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full ${
-                  index === currentStep ? 'bg-blue-600' : 'bg-gray-300'
-                }`}
-              />
-            ))}
-          </div>
-          
-          <div className="flex space-x-3">
+            <div className="space-y-4">
+              {steps.map((step, index) => (
+                <div key={index} className="flex gap-4 pb-4 border-b last:border-b-0">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-100">
+                      <span className="text-blue-600 font-semibold">{index + 1}</span>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900 mb-1">{step.title}</h3>
+                    <p className="text-sm text-gray-600 mb-2">{step.description}</p>
+                    <p className="text-xs text-blue-600">{step.tip}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
             <button
-              onClick={handleSkip}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
+              onClick={handleDismiss}
+              className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
             >
-              Skip
-            </button>
-            <button
-              onClick={handleNext}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              {currentStep === steps.length - 1 ? 'Get Started' : 'Next'}
+              Start Searching
             </button>
           </div>
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 }

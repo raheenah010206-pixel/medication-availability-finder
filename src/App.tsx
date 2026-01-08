@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { MedicationSearch } from './components/MedicationSearch';
 import { PharmacyCard } from './components/PharmacyCard';
+import { MedicationDetails } from './components/MedicationDetails';
+import { SavedMedicationsPanel, useSavedMedications } from './components/SavedMedicationsPanel';
 import { AddPharmacyModal } from './components/AddPharmacyModal';
 import { RecentUpdatesModal } from './components/RecentUpdatesModal';
 import { PopularMedsModal } from './components/PopularMedsModal';
@@ -25,6 +27,7 @@ function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearch = useDebounce(searchQuery, 300);
   const { showToast } = useToast();
+  const { addSavedMedication, isSaved } = useSavedMedications();
 
   useEffect(() => {
     if (selectedMedication) {
@@ -175,52 +178,59 @@ function App() {
             onShowPopular={() => setShowPopularMeds(true)}
           />
 
+          <SavedMedicationsPanel
+            onMedicationSelect={handleMedicationSelect}
+            selectedMedicationId={selectedMedication?.id}
+          />
+
           <MedicationSearch
             onMedicationSelect={handleMedicationSelect}
             selectedMedication={selectedMedication}
           />
 
           {selectedMedication && (
-            <div>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Availability for {selectedMedication.name}
-                  </h2>
-                  {selectedMedication.generic_name && (
-                    <p className="text-gray-600 mt-1">
-                      Generic: {selectedMedication.generic_name}
-                    </p>
-                  )}
-                </div>
-                <button
-                  onClick={() => setShowAddPharmacy(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Add Pharmacy
-                </button>
-              </div>
+            <div className="space-y-6">
+              <MedicationDetails medication={selectedMedication} />
 
-              {loading ? (
-                <LoadingSpinner text="Loading pharmacy information..." />
-              ) : pharmacies.length === 0 ? (
-                <EmptyState
-                  type="no-pharmacies"
-                  onAddPharmacy={() => setShowAddPharmacy(true)}
-                />
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {pharmacies.map((pharmacy) => (
-                    <PharmacyCard
-                      key={pharmacy.id}
-                      pharmacy={pharmacy}
-                      availability={getAvailabilityForPharmacy(pharmacy.id)}
-                      medicationId={selectedMedication.id}
-                      onUpdate={handleAvailabilityUpdate}
-                    />
-                  ))}
+              <div>
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">
+                      Availability for {selectedMedication.name}
+                    </h2>
+                    <p className="text-gray-600 mt-1">
+                      Check prices and stock status at local pharmacies
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setShowAddPharmacy(true)}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Add Pharmacy
+                  </button>
                 </div>
-              )}
+
+                {loading ? (
+                  <LoadingSpinner text="Loading pharmacy information..." />
+                ) : pharmacies.length === 0 ? (
+                  <EmptyState
+                    type="no-pharmacies"
+                    onAddPharmacy={() => setShowAddPharmacy(true)}
+                  />
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {pharmacies.map((pharmacy) => (
+                      <PharmacyCard
+                        key={pharmacy.id}
+                        pharmacy={pharmacy}
+                        availability={getAvailabilityForPharmacy(pharmacy.id)}
+                        medicationId={selectedMedication.id}
+                        onUpdate={handleAvailabilityUpdate}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 

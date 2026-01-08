@@ -3,6 +3,7 @@ import { Search, Pill as Pills, User, LogOut, Menu, Bell, Heart } from 'lucide-r
 import { useAuth } from '../hooks/useAuth';
 import { SearchSuggestions } from './SearchSuggestions';
 import { HelpTooltip } from './HelpTooltip';
+import { AccessibilityButton } from './AccessibilitySettings';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -77,7 +78,9 @@ export function Layout({ children, onSearch, searchQuery }: LayoutProps) {
             </div>
 
             {/* User Menu */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <AccessibilityButton />
+
               {user ? (
                 <div className="flex items-center space-x-4">
                   <button
