@@ -4,13 +4,16 @@ import App from './App.tsx';
 import './index.css';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ToastProvider } from './components/Toast';
+import { AccessibilityProvider } from './components/AccessibilitySettings';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ToastProvider>
-        <App />
-      </ToastProvider>
+      <AccessibilityProvider>
+        <ToastProvider>
+          <App />
+        </ToastProvider>
+      </AccessibilityProvider>
     </ErrorBoundary>
   </StrictMode>
 );
